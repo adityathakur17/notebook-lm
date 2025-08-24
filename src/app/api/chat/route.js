@@ -1,16 +1,13 @@
-import {
-  VectorStore,
-  VectorStoreRetriever,
-} from "@langchain/core/vectorstores";
+import { NextResponse } from "next/server";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { QdrantVectorStore } from "@langchain/qdrant";
 import OpenAI from "openai";
 
-export async function POST(request) {
+export async function POST(req) {
   try {
     const client = new OpenAI();
 
-    const userQuery = await request.json();
+    const {message} = await req.json();
 
     const embeddings = new OpenAIEmbeddings({
       model: "text-embedding-3-small",
@@ -28,7 +25,7 @@ export async function POST(request) {
       k: 3,
     });
 
-    const relevantChunk = await vectorRetriever.invoke(userQuery);
+    const relevantChunk = await vectorRetriever.invoke(message);
 
     const SYSTEM_PROMPT = `
     You are an AI assistant who helps resolving user query based on the
@@ -44,15 +41,15 @@ export async function POST(request) {
       model: "gpt-4.1-mini",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userQuery },
+        { role: "user", content: message },
       ],
     });
 
-    return Response.json({
-      response: completion.choices[0].message.content,
+    return NextResponse.json({
+      response: response.choices[0].message.content,
     });
   } catch (error) {
-    return Response.json(
+    return NextResponse.json(
       {
         error: "Failed to process request",
       },
