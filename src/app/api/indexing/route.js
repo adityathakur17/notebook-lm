@@ -1,4 +1,3 @@
-//differece between NextResponse and Response
 import { NextResponse } from "next/server";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { OpenAIEmbeddings } from "@langchain/openai";

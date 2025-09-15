@@ -7,7 +7,35 @@ export async function POST(req) {
   try {
     const client = new OpenAI();
 
-    const {message} = await req.json();
+    const { message } = await req.json();
+
+    const REFINED_PROMPT = `
+You are a query rewriting agent. Rewrite user queries so they are clear, concise, and easy for AI agents to understand.
+You fix typos and add extra context whenever required for better retrieval of information
+
+Examples:
+- "How High is the Eiffel Tower, it looked so huge when I was there last spring"
+  → "What is the height of the Eiffel Tower?"
+
+- "1 oz is 28 grams, how many cm is 1 inch"
+  → "Convert 1 inch to cm"
+
+- "What is the main point of this article? What did the author try to convey?"
+  → "What is the main key point of this article?"
+
+- "What is nodesj?"
+  → "What is node.js?"
+`;
+
+    const query = await client.chat.completions.create({
+      model:'gpt-4o-mini',
+      messages:[
+        {role:'system', content:REFINED_PROMPT},
+        {role:'user', content:message}
+      ]
+    })
+
+    const refinedQuery = query.choices[0].message.content
 
     const embeddings = new OpenAIEmbeddings({
       model: "text-embedding-3-small",
@@ -25,23 +53,24 @@ export async function POST(req) {
       k: 3,
     });
 
-    const relevantChunk = await vectorRetriever.invoke(message);
+    const relevantChunk = await vectorRetriever.invoke(refinedQuery);
 
     const SYSTEM_PROMPT = `
     You are an AI assistant who helps resolving user query based on the
-    context available to you from a PDF file with the content and page number.
+    context available to you from a PDF file or a given URL or written text with the content and page number(if applicable).
 
-    Only ans based on the available context from file only.
+    Only answer based on the available context only.
 
     Context:
     ${JSON.stringify(relevantChunk)}
   `;
 
+
     const response = await client.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: message },
+        { role: "user", content: refinedQuery },
       ],
     });
 
@@ -54,7 +83,7 @@ export async function POST(req) {
         error: "Failed to process request",
       },
       {
-        status: 500,
+        status: 429,
       }
     );
   }
