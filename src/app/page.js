@@ -9,6 +9,7 @@ export default function Home() {
   const [message, setMessage] = useState("");
   const [contextText, setContextText] = useState("");
   const [file, setFile] = useState(null);
+  const [url, setUrl] = useState("")
 
   // Send context (text or file) to /api/indexing
   const handleContextSubmit = async () => {
@@ -57,6 +58,35 @@ export default function Home() {
       setLoading(false);
     }
   };
+
+  const handleUrlSubmit = async()=>{
+    if(!url.trim()) return alert('Please enter a valid URL');
+
+    try {
+      setLoading(true)
+      const res = await fetch('api/url',{
+        method:'POST',
+        headers:'application/json',
+        body:JSON.stringify({url})
+      })
+
+      const data = await res.json()
+
+      if(!res.ok){
+        throw new Error(data.error || "Failed to process URL")
+
+        alert('URL processed successfully! (${data.collectionName})')
+        setUrl("")
+      }
+    } catch (error) {
+
+      alert("Error submitting URL: " + error.message)
+      
+    }finally{
+      setLoading(false)
+    }
+
+  }
 
   // Handle chatting with /api/chat
   const handleChat = async () => {
@@ -133,6 +163,16 @@ export default function Home() {
                 Selected: {file.name}
               </div>
             )}
+          </div>
+
+          {/* URL Input */}
+          <div>
+            <input type="text"
+            placeholder="Enter your URL here"
+            value={url}
+            onChange={(e)=>setUrl(e.target.value)}
+            className="mb-3 bg-gray-900 border border-gray-700 rounded p-3 text-white focus:outline-none focus:border-gray-500 "
+            />
           </div>
 
           <button
