@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { OpenAIEmbeddings } from "@langchain/openai";
 import { QdrantVectorStore } from "@langchain/qdrant";
-import * as cheerio from cheerio;
+import cheerio from "cheerio";
 
 export async function POST(req){
     try{

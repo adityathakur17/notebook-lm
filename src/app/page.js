@@ -59,34 +59,34 @@ export default function Home() {
     }
   };
 
-  const handleUrlSubmit = async()=>{
-    if(!url.trim()) return alert('Please enter a valid URL');
+  // const handleUrlSubmit = async()=>{
+  //   if(!url.trim()) return alert('Please enter a valid URL');
 
-    try {
-      setLoading(true)
-      const res = await fetch('api/url',{
-        method:'POST',
-        headers:'application/json',
-        body:JSON.stringify({url})
-      })
+  //   try {
+  //     setLoading(true)
+  //     const res = await fetch('api/url',{
+  //       method:'POST',
+  //       headers:'application/json',
+  //       body:JSON.stringify({url})
+  //     })
 
-      const data = await res.json()
+  //     const data = await res.json()
 
-      if(!res.ok){
-        throw new Error(data.error || "Failed to process URL")
+  //     if(!res.ok){
+  //       throw new Error(data.error || "Failed to process URL")
 
-        alert('URL processed successfully! (${data.collectionName})')
-        setUrl("")
-      }
-    } catch (error) {
+  //       alert('URL processed successfully! (${data.collectionName})')
+  //       setUrl("")
+  //     }
+  //   } catch (error) {
 
-      alert("Error submitting URL: " + error.message)
+  //     alert("Error submitting URL: " + error.message)
       
-    }finally{
-      setLoading(false)
-    }
+  //   }finally{
+  //     setLoading(false)
+  //   }
 
-  }
+  // }
 
   // Handle chatting with /api/chat
   const handleChat = async () => {
@@ -100,6 +100,7 @@ export default function Home() {
     setMessage("");
 
     try {
+      console.log('inside fetch try block')
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -109,6 +110,7 @@ export default function Home() {
       });
 
       const data = await res.json();
+      console.log(data)
 
       // Add AI response
       const aiMessage = { role: "assistant", content: data.response };
