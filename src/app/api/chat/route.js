@@ -10,22 +10,22 @@ export async function POST(req) {
     const { message } = await req.json();
 
     const REFINED_PROMPT = `
-You are a query rewriting agent. Rewrite user queries so they are clear, concise, and easy for AI agents to understand.
-You fix typos and add extra context whenever required for better retrieval of information
+    You are a query rewriting agent. Rewrite user queries so they are clear, concise, and easy for AI agents to understand.
+    You fix typos and add extra context whenever required for better retrieval of information
 
-Examples:
-- "How High is the Eiffel Tower, it looked so huge when I was there last spring"
-  → "What is the height of the Eiffel Tower?"
+    Examples:
+    - "How High is the Eiffel Tower, it looked so huge when I was there last spring"
+      → "What is the height of the Eiffel Tower?"
 
-- "1 oz is 28 grams, how many cm is 1 inch"
-  → "Convert 1 inch to cm"
+    - "1 oz is 28 grams, how many cm is 1 inch"
+      → "Convert 1 inch to cm"
 
-- "What is the main point of this article? What did the author try to convey?"
-  → "What is the main key point of this article?"
+    - "What is the main point of this article? What did the author try to convey?"
+      → "What is the main key point of this article?"
 
-- "What is nodesj?"
-  → "What is node.js?"
-`;
+    - "What is nodesj?"
+      → "What is node.js?"
+    `;
 
     const query = await client.chat.completions.create({
       model:'gpt-4o-mini',
@@ -37,19 +37,6 @@ Examples:
 
     const refinedQuery = query.choices[0].message.content
 
-    const hyde = await client.chat.completions.create({
-      model:'gpt-40-mini',
-      messages:[
-        {role:'user',content:refinedQuery}
-      ]
-    })
-
-    const hydeResult = hyde.choices[0].message.content
-
-    const embeddings = new OpenAIEmbeddings({
-      model: "text-embedding-3-small",
-    });
-
     const vectorStore = await QdrantVectorStore.fromExistingCollection(
       embeddings,
       {
@@ -58,22 +45,47 @@ Examples:
       }
     );
 
-    const vectorRetriever = vectorStore.asRetriever({
-      k: 3,
-    });
+    hydePrompt = `
+    Generate a hypothetical answer for the asked question.
+    Don't say 'I dont know' -  give the best answer possible.
 
-    const relevantChunk = await vectorRetriever.invoke(refinedQuery);
+    Question: ${refinedQuery}
+    `
+
+    const hydeRes = await client.chat.completions.create({
+      model:'gpt-4o-mini',
+      message:[
+        {role:'user', content:hydePrompt}
+      ]
+    })
+
+    const hydeResult = hydeRes.choices[0].message.content
+
+    const hydeEmbeddings = await embeddings.embedQuery(hydeResult)
+
+    const relevantDocs = await vectorStore.similaritySearchVectorWithScore(
+      hydeEmbeddings,
+      4
+    )
+
+
+    // const vectorRetriever = vectorStore.asRetriever({
+    //   k: 3,
+    // });
+
+    // const relevantChunk = await vectorRetriever.invoke(refinedQuery);
 
     //STEP 2 Retrieving Info from the database
 
+    const context = relevantDocs.map(doc=>doc.pageContent).join('\n\n---\n\n')
     const SYSTEM_PROMPT = `
     You are an AI assistant who helps resolving user query based on the
-    context available to you from a PDF file or a given URL or written text with the content and page number(if applicable).
+    context available to you with the content and page number(if applicable).
 
     Only answer based on the available context only.
 
     Context:
-    ${JSON.stringify(relevantChunk)}
+    ${context}
   `;
 
 
