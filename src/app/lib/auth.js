@@ -13,11 +13,19 @@ export const NEXT_AUTH_CONFIG = {
         CredentialsProvider({
             name:'Credentials',
             credentials:{
-                username:{label:'Username', type:'text', placeholder:'Enter username'},
+                email:{label:'Email', type:'text', placeholder:'Enter Email'},
                 password:{label:'password', type:'password'}
             },
             async authorize(credentials,req){
                 const {email, password} = credentials;
+
+                await connectDB()
+                const user = await User.findOne({email})
+
+                if(!user) throw new Error("User does not exist")
+                
+                const isValid = await bcrypt.compare(password, user.password)
+                if(!isValid) throw new Error("Invalid Credentials")
 
                 
             }
