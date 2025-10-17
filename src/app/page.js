@@ -18,7 +18,7 @@ export default function Home() {
       loading
     </div>
   )
-  if(!session) return <p>Not Signed in</p>
+  if(!session) redirect('/login')
 
   // Send context (text or file) to /api/indexing
   const handleContextSubmit = async () => {

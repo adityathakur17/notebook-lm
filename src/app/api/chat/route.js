@@ -5,6 +5,10 @@ import OpenAI from "openai";
 
 export async function POST(req) {
   console.log("inside function");
+  const session = await getServerSession(NEXT_AUTH_CONFIG)
+  if(!session){
+    return Response.json({error:'Unauthorized'},{status:401})
+  }
   try {
     const client = new OpenAI();
 

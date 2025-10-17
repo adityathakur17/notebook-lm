@@ -15,7 +15,7 @@ export default function LoginPage(){
         <div>
             <form onSubmit={handleSubmit}>
                 <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email"/>
-                <input value={password} onChange={e=>setEmail(e.target.value)} placeholder="Password"/>
+                <input value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password"/>
                 <button type='submit'>Login</button>
             </form>
             <button onClick={()=>signIn("google")}>Sign in with Google</button>
