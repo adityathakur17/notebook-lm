@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
+import {useSession, signOut} from "next-auth/react"
 import Navbar from "./components/navbar";
 
 export default function Home() {
+  const {data:session, status} = useSession();
   const [loading, setLoading] = useState(false);
   const [chatLoading, setChatLoading] = useState(false);
   const [conversation, setConversation] = useState([]);
@@ -10,6 +12,13 @@ export default function Home() {
   const [contextText, setContextText] = useState("");
   const [file, setFile] = useState(null);
   const [url, setUrl] = useState("")
+
+  if(status === 'loading') return (
+    <div>
+      loading
+    </div>
+  )
+  if(!session) return <p>Not Signed in</p>
 
   // Send context (text or file) to /api/indexing
   const handleContextSubmit = async () => {
